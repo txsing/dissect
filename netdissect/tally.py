@@ -99,15 +99,20 @@ def gather_topk(compute, dataset, topk, k=None,
     return a generator that yields [(unit, rank), data]
     '''
 
+    k0 = 0
     if k is None:
         k = topk.k
+    elif ',' in k:
+        inx = k.split(',')
+        k0,k = int(inx[0]), int(inx[1])
+        k1 = k0 + k
     args = dict(k=k, count=topk.count)
     cached_state = load_cached_state(cachefile, args)
     if cached_state is not None:
         return runningstats.GatherTensor(state=cached_state)
     gt = runningstats.GatherTensor(topk=topk, k=k)
     needed_images = defaultdict(list)
-    for unit, imgnums in enumerate(topk.result()[1][:,:k]):
+    for unit, imgnums in enumerate(topk.result()[1][:,k0:k1]):
         for rank, imgnum in enumerate(imgnums.numpy()):
             needed_images[imgnum].append((unit, rank))
     needed_sample = FixedSubsetSampler(sorted(needed_images.keys()))

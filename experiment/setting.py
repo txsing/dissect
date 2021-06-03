@@ -45,7 +45,7 @@ def load_classifier(architecture):
     return model
 
 def load_dataset(domain, split=None, full=False, crop_size=None, download=True):
-    if domain in ['places', 'imagenet']:
+    if domain in ['places', 'imagenet', 'pacs-p', 'pacs-a', 'pacs-c', 'pacs-s']:
         if split is None:
             split = 'val'
         dirname = 'datasets/%s/%s' % (domain, split)

@@ -176,6 +176,18 @@ def make_upfn(args, dataset, model, layername):
             convolutions=convs)
     return upfn
 
+def make_upfn_without_hooks(args, dataset, layername, layers_output):
+    convs = None
+    data_HW_size = layers_output[layername].shape[2:]
+    pbar.print('upsampling from data_shape', tuple(data_HW_size))
+    upfn = upsample.upsampler(
+        (56, 56),
+        data_shape=data_HW_size,
+        source=dataset,
+        convolutions=convs)
+    return upfn
+    
+
 def instrumented_layername(args):
     '''Chooses the layer name to dissect.'''
     if args.layer is not None:
@@ -194,7 +206,7 @@ def instrumented_layername(args):
 
 def load_model(args):
     '''Loads one of the benchmark classifiers or generators.'''
-    if args.model in ['alexnet', 'vgg16', 'resnet152']:
+    if args.model in ['alexnet', 'vgg16', 'resnet152', 'resnet18']:
         model = setting.load_classifier(args.model)
     elif args.model == 'progan':
         model = setting.load_proggan(args.dataset)
@@ -204,11 +216,17 @@ def load_model(args):
 def load_dataset(args, model=None):
     '''Loads an input dataset for testing.'''
     from torchvision import transforms
+    print(args.dataset)
     if args.model == 'progan':
         dataset = zdataset.z_dataset_for_model(model, size=10000, seed=1)
         return dataset
-    elif args.dataset in ['places']:
-        crop_size = 227 if args.model == 'alexnet' else 224
+    elif args.dataset in ['places', 'pacs-p', 'pacs-a', 'pacs-c', 'pacs-s']:
+        if args.model == 'alexnet':
+            crop_size = 227
+        elif args.model == 'vgg16':
+            crop_size = 224
+        else:
+            crop_size = 222 # for resnet18        
         return setting.load_dataset(args.dataset, split='val', full=True,
                 crop_size=crop_size, download=True)
     assert False
